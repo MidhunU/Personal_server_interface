@@ -10,9 +10,15 @@ app = Flask(__name__)
 app.secret_key = 'antigravity-local-transfer-secret-key-1337'
 
 # Configure Upload Folder
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+UPLOAD_FOLDER = '/storage/emulated/0/Pictures/FlaskServerUploads'
+try:
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+except Exception:
+    # Fallback to local workspace uploads directory if target Android path is inaccessible (e.g., during Windows dev)
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Set 1GB Max file size limit
