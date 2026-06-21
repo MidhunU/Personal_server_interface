@@ -10,7 +10,7 @@ app = Flask(__name__)
 app.secret_key = 'antigravity-local-transfer-secret-key-1337'
 
 # Configure Upload Folder
-UPLOAD_FOLDER = '/storage/emulated/0/Pictures/FlaskServerUploads'
+UPLOAD_FOLDER = '/storage/flask_files'
 try:
     os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 except Exception:
