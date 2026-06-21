@@ -3,17 +3,31 @@ import sys
 import socket
 import math
 import datetime
+import shutil
+import subprocess
 from flask import Flask, request, redirect, url_for, send_from_directory, render_template, flash
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 app.secret_key = 'antigravity-local-transfer-secret-key-1337'
 
-# Configure Upload Folder
-UPLOAD_FOLDER = '/storage/flask_files'
-try:
-    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-except Exception:
+# Configure Upload Folder to target Android Gallery
+# Tries the Termux symlink path first, then absolute Android Pictures directory, then local fallback
+ANDROID_PATHS = [
+    os.path.expanduser('~/storage/pictures/FlaskServerUploads'),
+    '/storage/emulated/0/Pictures/FlaskServerUploads'
+]
+
+UPLOAD_FOLDER = None
+for path in ANDROID_PATHS:
+    try:
+        os.makedirs(path, exist_ok=True)
+        UPLOAD_FOLDER = path
+        break
+    except Exception:
+        continue
+
+if not UPLOAD_FOLDER:
     # Fallback to local workspace uploads directory if target Android path is inaccessible (e.g., during Windows dev)
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
@@ -134,6 +148,13 @@ def upload_file():
                 filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
                 file.save(filepath)
                 uploaded_count += 1
+                
+                # Trigger Android media scan if running under Termux, making it appear in gallery instantly
+                try:
+                    if shutil.which('termux-media-scan'):
+                        subprocess.run(['termux-media-scan', filepath], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                except Exception:
+                    pass
             except Exception as e:
                 errors.append(f"Error saving {file.filename}: {str(e)}")
                 
